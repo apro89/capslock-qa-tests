@@ -3,6 +3,7 @@ import { type Page } from '@playwright/test';
 import { BasePage } from './BasePage';
 import { FormComponent } from './components/FormComponent';
 import { LocationComponent } from './components/LocationComponent';
+import { ReviewsComponent } from './components/ReviewsComponent';
 import { SliderComponent } from './components/SliderComponent';
 
 /**
@@ -14,6 +15,7 @@ export class HomePage extends BasePage {
   readonly slider: SliderComponent;
   readonly form: FormComponent;
   readonly location: LocationComponent;
+  readonly reviews: ReviewsComponent;
 
   constructor(page: Page) {
     super(page);
@@ -21,6 +23,7 @@ export class HomePage extends BasePage {
     this.slider = new SliderComponent(page);
     this.form = new FormComponent(page);
     this.location = new LocationComponent(page);
+    this.reviews = new ReviewsComponent(page);
   }
 
   // Other page-specific elements and methods would go here

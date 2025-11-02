@@ -148,4 +148,33 @@ test.describe('Home Page - E2E Integration Tests', () => {
     // Assert - Form interaction successful
     await expect(homePage.form.emailInputLocator).toBeVisible();
   });
+
+  // ============================================
+  // Reviews Component Tests
+  // ============================================
+
+  test.describe('Reviews Component', () => {
+    test('should display reviews section with "Show more" button by default', async () => {
+      // Assert - Reviews section should be visible and in collapsed state
+      await homePage.reviews.expectReviewsVisible();
+      await homePage.reviews.expectCollapsed();
+    });
+
+    test('should toggle reviews between expanded and collapsed states', async () => {
+      // Arrange - Verify initial collapsed state
+      await homePage.reviews.expectCollapsed();
+
+      // Act - Expand reviews
+      await homePage.reviews.toggleShowMoreLess();
+
+      // Assert - Should be in expanded state (includes reviewFull visibility check)
+      await homePage.reviews.expectExpanded();
+
+      // Act - Collapse reviews
+      await homePage.reviews.toggleShowMoreLess();
+
+      // Assert - Should be back in collapsed state (includes reviewFull visibility check)
+      await homePage.reviews.expectCollapsed();
+    });
+  });
 });
