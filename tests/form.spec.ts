@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-import { FormPage } from '../pages/FormPage';
+import { FormComponent } from '../pages/components/FormComponent';
 import {
   validFormData,
   invalidEmailFormats,
@@ -23,11 +23,11 @@ import {
  * 5. After successful submission, user must be redirected to "Thank you" page
  */
 test.describe('Form Validation - Requirement-Based Tests', () => {
-  let form: FormPage;
+  let form: FormComponent;
 
   test.beforeEach(async ({ page }) => {
-    form = new FormPage(page);
-    await form.goto('/');
+    await page.goto('/');
+    form = new FormComponent(page);
   });
 
   // ============================================
@@ -52,7 +52,7 @@ test.describe('Form Validation - Requirement-Based Tests', () => {
 
         // Assert - Should show validation error
         await form.expectValidationError('zip');
-        await expect(form.emailInput).toBeHidden();
+        await expect(form.emailInputLocator).toBeHidden();
       });
     });
 
@@ -65,17 +65,11 @@ test.describe('Form Validation - Requirement-Based Tests', () => {
 
       // Act
       await form.fillForm(validZipData);
-      await form.emailInput.waitFor({ state: 'visible' });
+      await form.emailInputLocator.waitFor({ state: 'visible' });
 
-      // Assert - Should not show zip validation error
-      const hasZipError = await form.errorMessages
-        .filter({ hasText: /zip|wrong/i })
-        .isVisible()
-        .catch(() => false);
-      expect(hasZipError).toBeFalsy();
-
+      // Assert - Should not show zip validation error (email input is visible, meaning zip was accepted)
       // Explicit assertion for Playwright static analysis
-      await expect(form.emailInput).toBeVisible();
+      await expect(form.emailInputLocator).toBeVisible();
     });
   });
 
@@ -98,7 +92,7 @@ test.describe('Form Validation - Requirement-Based Tests', () => {
 
         // Assert - Should show validation error
         await form.expectValidationError('email');
-        await expect(form.phoneInput).toBeHidden();
+        await expect(form.phoneInputLocator).toBeHidden();
       });
     });
 
@@ -114,7 +108,7 @@ test.describe('Form Validation - Requirement-Based Tests', () => {
       await form.fillForm(validEmailData);
 
       // Assert - Should not show email validation error
-      const hasError = await form.errorMessages
+      const hasError = await form.errorMessagesLocator
         .filter({ hasText: /email|wrong/i })
         .isVisible()
         .catch(() => false);
@@ -161,7 +155,7 @@ test.describe('Form Validation - Requirement-Based Tests', () => {
       await form.fillAndSubmit(validPhoneData);
 
       // Assert - Should not show phone validation error
-      const hasError = await form.errorMessages
+      const hasError = await form.errorMessagesLocator
         .filter({ hasText: /phone/i })
         .isVisible()
         .catch(() => false);

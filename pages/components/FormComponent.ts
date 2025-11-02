@@ -1,6 +1,4 @@
-import { expect, type Locator } from '@playwright/test';
-
-import { BasePage } from './BasePage';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 /**
  * Form field names based on requirements.
@@ -19,44 +17,61 @@ export interface FormData {
 }
 
 /**
- * Page Object for form pages.
+ * Reusable Form Component.
+ * Can be used on any page that contains a form with the specified structure.
  * Implements tests based on REQUIREMENTS, not current implementation.
- * Tests will fail if implementation doesn't match requirements (indicating defects).
  */
-export class FormPage extends BasePage {
-  // Form container selector (handles multiple forms on page)
-  readonly formContainer: Locator = this.page.locator('.formWrap_quiz').first();
+export class FormComponent {
+  private readonly page: Page;
+  private readonly formContainer: Locator;
+
+  /**
+   * Creates a new FormComponent instance.
+   * @param page The Playwright page instance
+   * @param containerSelector Optional container selector. If not provided, uses default form selector.
+   */
+  constructor(page: Page, containerSelector: string = '.formWrap_quiz') {
+    this.page = page;
+    this.formContainer = page.locator(containerSelector).first();
+  }
 
   // Form field locators (flexible selectors to find fields regardless of step)
-  readonly zipInput: Locator = this.formContainer
-    .locator('input[data-zip-code-input]')
-    .first();
-  readonly emailInput: Locator = this.formContainer
-    .locator('input[name="email"][placeholder="Email Address"]')
-    .first();
-  readonly phoneInput: Locator = this.formContainer
-    .locator('input[data-phone-input], input[name="phone"]')
-    .first();
-  readonly nextButton: Locator = this.formContainer
-    .locator('button:has-text("Next")')
-    .first();
+  private get zipInput(): Locator {
+    return this.formContainer.locator('input[data-zip-code-input]').first();
+  }
+  private get emailInput(): Locator {
+    return this.formContainer
+      .locator('input[name="email"][placeholder="Email Address"]')
+      .first();
+  }
+  private get phoneInput(): Locator {
+    return this.formContainer
+      .locator('input[data-phone-input], input[name="phone"]')
+      .first();
+  }
+  private get nextButton(): Locator {
+    return this.formContainer.locator('button:has-text("Next")').first();
+  }
 
   // Submit button (only visible)
-  readonly submitButton: Locator = this.formContainer.getByRole('button', {
-    name: /submit/i,
-  });
+  private get submitButton(): Locator {
+    return this.formContainer.getByRole('button', {
+      name: /submit/i,
+    });
+  }
 
   // Error message locators (flexible to find errors anywhere in form)
-  readonly errorMessages: Locator =
-    this.formContainer.locator('[data-error-block]');
+  private get errorMessages(): Locator {
+    return this.formContainer.locator('[data-error-block]');
+  }
 
   /**
    * Maps field names to their corresponding input locators.
    */
-  private readonly fieldMap: Record<FormFieldName, Locator> = {
-    zip: this.zipInput,
-    email: this.emailInput,
-    phone: this.phoneInput,
+  private readonly fieldMap: Record<FormFieldName, () => Locator> = {
+    zip: () => this.zipInput,
+    email: () => this.emailInput,
+    phone: () => this.phoneInput,
   };
 
   /**
@@ -101,15 +116,16 @@ export class FormPage extends BasePage {
 
     // Fill email (might be in step 4 or sorry step)
     if (data.email !== undefined) {
+      // Wait for email input to be visible (form transitioned)
       await this.emailInput.waitFor({ state: 'visible' });
       await this.emailInput.fill(data.email);
 
-      //await this.nextButton.click();
       await this.submitButton.click();
     }
 
     // Fill phone (usually last step)
     if (data.phone !== undefined) {
+      // Wait for phone input to be visible
       await this.phoneInput.waitFor({ state: 'visible' });
       await this.phoneInput.fill(data.phone);
     }
@@ -162,5 +178,21 @@ export class FormPage extends BasePage {
   async expectThankYouRedirect(): Promise<void> {
     await this.page.waitForURL(/thank/i, { timeout: 10000 });
     await expect(this.page).toHaveURL(/thank/i);
+  }
+
+  // Expose readonly access to form elements for tests that need them
+  get zipInputLocator(): Locator {
+    return this.zipInput;
+  }
+  get emailInputLocator(): Locator {
+    return this.emailInput;
+  }
+  get phoneInputLocator(): Locator {
+    return this.phoneInput;
+  }
+
+  // Expose error messages locator for tests
+  get errorMessagesLocator(): Locator {
+    return this.errorMessages;
   }
 }
