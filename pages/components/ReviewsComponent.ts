@@ -11,6 +11,23 @@ export class ReviewsComponent {
   private readonly showMoreLessButton: Locator;
   private readonly showMoreLessText: Locator;
 
+  // Image gallery locators
+  private get lightGalleryContainer(): Locator {
+    return this.reviewsContainer.locator('[data-light-gallery]').first();
+  }
+  private get lightGalleryImages(): Locator {
+    return this.lightGalleryContainer.locator('.review__img');
+  }
+  private get lightbox(): Locator {
+    return this.page.locator('.lg-outer.lg-visible');
+  }
+  private get lightboxCloseButton(): Locator {
+    return this.lightbox.locator('.lg-close');
+  }
+  private get lightboxCounter(): Locator {
+    return this.lightbox.locator('#lg-counter');
+  }
+
   /**
    * Creates a new ReviewsComponent instance.
    * @param page The Playwright page instance
@@ -103,6 +120,90 @@ export class ReviewsComponent {
     await expect(this.showMoreLessButton).toBeVisible();
   }
 
+  // ============================================
+  // Image Gallery Methods
+  // ============================================
+
+  /**
+   * Gets the count of review images in the first gallery.
+   * @returns Number of images in the gallery
+   */
+  async getReviewImageCount(): Promise<number> {
+    await this.lightGalleryContainer.waitFor({ state: 'visible' });
+    return await this.lightGalleryImages.count();
+  }
+
+  /**
+   * Clicks on a review image gallery to open the lightbox.
+   * @param imageIndex Optional index of the image to click (defaults to first)
+   */
+  async clickReviewImage(imageIndex: number = 0): Promise<void> {
+    await this.lightGalleryImages.nth(imageIndex).waitFor({
+      state: 'visible',
+    });
+    await this.lightGalleryImages.nth(imageIndex).click();
+    // Wait for lightbox to appear
+    await this.lightbox.waitFor({ state: 'visible', timeout: 2000 });
+  }
+
+  /**
+   * Asserts that the lightbox/gallery is open and visible.
+   */
+  async expectLightboxVisible(): Promise<void> {
+    await expect(this.lightbox).toBeVisible();
+    await expect(this.lightbox).toHaveClass(/lg-visible/);
+  }
+
+  /**
+   * Gets the current image index from the lightbox counter.
+   * @returns Current image number (1-based)
+   */
+  async getCurrentImageIndex(): Promise<number> {
+    const counterText = await this.lightboxCounter.textContent();
+    const match = counterText?.match(/(\d+)\s*\/\s*\d+/);
+    return match ? parseInt(match[1], 10) : 0;
+  }
+
+  /**
+   * Gets the total image count from the lightbox counter.
+   * @returns Total number of images
+   */
+  async getTotalImageCount(): Promise<number> {
+    const counterText = await this.lightboxCounter.textContent();
+    const match = counterText?.match(/\d+\s*\/\s*(\d+)/);
+    return match ? parseInt(match[1], 10) : 0;
+  }
+
+  /**
+   * Closes the lightbox/gallery.
+   */
+  async closeLightbox(): Promise<void> {
+    await this.lightboxCloseButton.waitFor({ state: 'visible' });
+    await this.lightboxCloseButton.click();
+    // Wait for lightbox to close
+    await this.lightbox
+      .waitFor({ state: 'hidden', timeout: 1000 })
+      .catch(() => {
+        // Lightbox might use display: none, check via waitForFunction
+      });
+    await this.page.waitForFunction(
+      () => {
+        const lightbox = document.querySelector('.lg-outer.lg-visible');
+        return !lightbox || lightbox.classList.contains('lg-visible') === false;
+      },
+      { timeout: 1000 },
+    );
+  }
+
+  /**
+   * Asserts that the lightbox shows the expected image index.
+   * @param expectedIndex Expected image index (1-based)
+   */
+  async expectCurrentImageIndex(expectedIndex: number): Promise<void> {
+    const currentIndex = await this.getCurrentImageIndex();
+    expect(currentIndex).toBe(expectedIndex);
+  }
+
   // Expose locators for tests
   get reviewsContainerLocator(): Locator {
     return this.reviewsContainer;
@@ -115,5 +216,14 @@ export class ReviewsComponent {
   }
   get showMoreLessTextLocator(): Locator {
     return this.showMoreLessText;
+  }
+  get lightGalleryContainerLocator(): Locator {
+    return this.lightGalleryContainer;
+  }
+  get lightGalleryImagesLocator(): Locator {
+    return this.lightGalleryImages;
+  }
+  get lightboxLocator(): Locator {
+    return this.lightbox;
   }
 }

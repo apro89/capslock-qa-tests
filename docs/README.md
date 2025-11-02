@@ -73,29 +73,58 @@ npx playwright install chromium
 
 ## Project Structure
 
+This project uses a **Component-Based Page Object Model (POM)** approach for organizing test code.
+
 ```
-/pages — page objects
-
-/tests — test suites
-
-/utils — test data, helpers
-
-/docs — documentation
+capslock-qa-tests/
+├── pages/                      # Page Objects and Components
+│   ├── BasePage.ts            # Base class for all pages
+│   ├── HomePage.ts            # Page object that composes components
+│   └── components/            # Reusable component classes
+│       ├── FormComponent.ts   # Form interaction logic
+│       ├── LocationComponent.ts
+│       ├── ReviewsComponent.ts
+│       └── SliderComponent.ts
+├── tests/                     # Test specifications
+│   ├── form.spec.ts
+│   ├── home-page.spec.ts
+│   └── slider.spec.ts
+├── utils/                     # Test utilities
+│   └── testData.ts           # Test data and fixtures
+├── docs/                      # Documentation
+│   └── README.md
+└── playwright.config.ts       # Playwright configuration
 ```
 
-## Useful Commands
+### Testing Approach: Component-Based POM
 
-```bash
-# List all browsers
-npx playwright install --list
+This project implements **Page Object Model** with a **composition pattern**, where:
 
-# Run tests in specific browser
-npx playwright test --project=chromium
+1. **Pages** represent full pages and compose **Components**
+   - Example: `HomePage` contains `slider`, `form`, `location`, and `reviews` components
 
-# Run tests with trace viewer
-npx playwright test --trace on
+2. **Components** are reusable, self-contained classes that:
+   - Encapsulate locators (private)
+   - Provide actions (public methods like `clickNext()`, `fillForm()`)
+   - Include assertions (methods like `expectVisible()`, `expectSynchronized()`)
 
-# Show last test report
-npx playwright show-report
-```
+3. **Inheritance**: All pages extend `BasePage` for common functionality
+
+4. **Usage in Tests**:
+   ```typescript
+   // Tests interact with pages and components
+   homePage = new HomePage(page);
+   await homePage.slider.clickNext();
+   await homePage.form.fillAndSubmit(data);
+   await homePage.reviews.expectCollapsed();
+   ```
+
+### Benefits
+
+- ✅ **Reusability**: Components can be used across multiple pages
+- ✅ **Maintainability**: Changes to UI elements are isolated to specific components
+- ✅ **Readability**: Tests use high-level, domain-specific methods
+- ✅ **Scalability**: Easy to add new pages or components without affecting existing code
+
+
 

@@ -176,5 +176,69 @@ test.describe('Home Page - E2E Integration Tests', () => {
       // Assert - Should be back in collapsed state (includes reviewFull visibility check)
       await homePage.reviews.expectCollapsed();
     });
+
+    test.describe('Review Image Gallery', () => {
+      test('should detect reviews with image galleries', async () => {
+        // Assert - Review images should exist and be visible
+        await expect(
+          homePage.reviews.lightGalleryContainerLocator,
+        ).toBeVisible();
+        const imageCount = await homePage.reviews.getReviewImageCount();
+        expect(imageCount).toBeGreaterThan(0);
+      });
+
+      test('should open lightbox when clicking on review image', async () => {
+        // Arrange - Verify review images exist
+        await expect(
+          homePage.reviews.lightGalleryContainerLocator,
+        ).toBeVisible();
+
+        // Act - Click on first review image
+        await homePage.reviews.clickReviewImage(0);
+
+        // Assert - Lightbox should be visible
+        await homePage.reviews.expectLightboxVisible();
+        await expect(homePage.reviews.lightboxLocator).toBeVisible();
+
+        // Cleanup - Close lightbox
+        await homePage.reviews.closeLightbox();
+      });
+
+      test('should display correct image counter in lightbox', async () => {
+        // Arrange - Verify review images exist
+        await expect(
+          homePage.reviews.lightGalleryContainerLocator,
+        ).toBeVisible();
+
+        // Act - Open lightbox
+        await homePage.reviews.clickReviewImage(0);
+        await homePage.reviews.expectLightboxVisible();
+
+        // Assert - Counter should show correct format (e.g., "1 / 2")
+        const totalImages = await homePage.reviews.getTotalImageCount();
+        expect(totalImages).toBeGreaterThan(0);
+        await homePage.reviews.expectCurrentImageIndex(1);
+
+        // Cleanup - Close lightbox
+        await homePage.reviews.closeLightbox();
+      });
+
+      test('should close lightbox when clicking close button', async () => {
+        // Arrange - Verify review images exist
+        await expect(
+          homePage.reviews.lightGalleryContainerLocator,
+        ).toBeVisible();
+
+        // Act - Open lightbox
+        await homePage.reviews.clickReviewImage(0);
+        await homePage.reviews.expectLightboxVisible();
+
+        // Act - Close lightbox
+        await homePage.reviews.closeLightbox();
+
+        // Assert - Lightbox should be hidden
+        await expect(homePage.reviews.lightboxLocator).toBeHidden();
+      });
+    });
   });
 });
